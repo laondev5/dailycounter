@@ -17,24 +17,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Define the structure for our count data
-// type CountData = {
-//   [key: string]: number,
-// };
-
-// Function to generate a random number between 100 and 235
 function getRandomNumber() {
   return Math.floor(Math.random() * (235 - 100 + 1)) + 100;
 }
 
-// Function to simulate data for the current month
 function simulateData() {
   const data = {};
   const today = new Date();
   const startDate = startOfMonth(today);
   const endDate = endOfMonth(today);
 
-  // Generate data for each day of the month up to yesterday
   const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
   daysInMonth.forEach((day) => {
     if (isBefore(day, today)) {
@@ -43,7 +35,6 @@ function simulateData() {
     }
   });
 
-  // Calculate and add the monthly total
   const monthTotal = Object.values(data).reduce((sum, count) => sum + count, 0);
   data[format(today, "MMMM yyyy")] = monthTotal;
 
@@ -51,7 +42,6 @@ function simulateData() {
 }
 
 export default function CounterApp() {
-  // State variables
   const [data, setData] = useState({});
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +50,6 @@ export default function CounterApp() {
   const [isCountVisible, setIsCountVisible] = useState(false);
 
   useEffect(() => {
-    // Function to check time and update count if necessary
     const checkTimeAndUpdateCount = () => {
       const now = new Date();
       const midnight = startOfDay(now);
@@ -69,18 +58,16 @@ export default function CounterApp() {
 
       const todayString = format(now, "EEEE, MMMM d, yyyy");
 
-      // Check if it's a new day and update count if necessary
-      if (!isSameDay(now, lastCountDate)) {
-        if (isAfterMidnight && data[todayString] === undefined) {
+      if (!isSameDay(now, lastCountDate) || !currentCount) {
+        if (isAfterMidnight && !data[todayString]) {
           startNewDayCount(now);
-        } else if (data[todayString] !== undefined) {
+        } else if (data[todayString]) {
           setCurrentCount(data[todayString]);
           setLastCountDate(now);
         }
       }
     };
 
-    // Load data from localStorage or generate new data
     const storedData = localStorage.getItem("counterData");
     const storedLastCountDate = localStorage.getItem("lastCountDate");
 
@@ -108,15 +95,12 @@ export default function CounterApp() {
       localStorage.setItem("lastCountDate", today.toISOString());
     }
 
-    // Initial check and set up interval for periodic checks
     checkTimeAndUpdateCount();
-    const interval = setInterval(checkTimeAndUpdateCount, 60000); // Check every minute
+    const interval = setInterval(checkTimeAndUpdateCount, 60000);
 
-    // Clean up interval on component unmount
     return () => clearInterval(interval);
-  }, [data, lastCountDate]);
+  }, []);
 
-  // Function to start a new day's count
   function startNewDayCount(date) {
     const newCount = getRandomNumber();
     const dateString = format(date, "EEEE, MMMM d, yyyy");
@@ -126,7 +110,6 @@ export default function CounterApp() {
     setLastCountDate(date);
     setData((prevData) => {
       const newData = { ...prevData, [dateString]: newCount };
-      // Recalculate monthly total
       const monthTotal = Object.entries(newData)
         .filter(
           ([key]) =>
@@ -134,15 +117,14 @@ export default function CounterApp() {
         )
         .reduce((sum, [_, count]) => sum + count, 0);
       newData[monthString] = monthTotal;
+
+      localStorage.setItem("counterData", JSON.stringify(newData));
+      localStorage.setItem("lastCountDate", date.toISOString());
+
       return newData;
     });
-
-    // Persist data to localStorage
-    localStorage.setItem("counterData", JSON.stringify(data));
-    localStorage.setItem("lastCountDate", date.toISOString());
   }
 
-  // Filter and search data
   const filteredData = Object.entries(data).filter(([key, _]) => {
     const matchesFilter =
       filter === "all"
@@ -150,9 +132,7 @@ export default function CounterApp() {
         : filter === "days"
         ? key.includes(",")
         : !key.includes(",");
-
     const matchesSearch = key.toLowerCase().includes(searchTerm.toLowerCase());
-
     return matchesFilter && matchesSearch;
   });
 
@@ -163,7 +143,6 @@ export default function CounterApp() {
           Daily Counter Dashboard
         </h1>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Filter buttons */}
           <div
             className="flex rounded-md shadow-sm"
             role="group"
@@ -188,7 +167,6 @@ export default function CounterApp() {
               Months
             </Button>
           </div>
-          {/* Search input */}
           <div className="relative w-full md:w-64">
             <Input
               type="text"
@@ -205,7 +183,6 @@ export default function CounterApp() {
         </div>
       </header>
       <main>
-        {/* Today's count card */}
         <Card className="mb-6 bg-blue-100">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -229,7 +206,6 @@ export default function CounterApp() {
             </p>
           </CardContent>
         </Card>
-        {/* Grid of count cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredData.map(([date, count]) => (
             <Card
@@ -253,7 +229,6 @@ export default function CounterApp() {
           ))}
         </div>
       </main>
-      {/* Message for no results */}
       {filteredData.length === 0 && (
         <p className="text-center text-gray-500 mt-8">
           No results found. Try adjusting your search or filter.
