@@ -177,8 +177,9 @@ function simulateData() {
 function calculateMonthTotal(monthString) {
   const storedData = localStorage.getItem("counterData");
   if (!storedData) return 0;
-
+  //console.log("storedData", storedData);
   const data = JSON.parse(storedData);
+  //console.log(data);
   const today = new Date();
   const currentMonth = format(today, "MMMM yyyy");
 
@@ -188,18 +189,25 @@ function calculateMonthTotal(monthString) {
   }
 
   // Calculate the sum of all daily counts for the current month
-  const monthTotal = Object.entries(data)
-    .filter(
-      ([key, value]) =>
-        key.includes(monthString) &&
-        key.includes(",") &&
-        typeof value === "number"
-    )
-    .reduce((sum, [, count]) => sum + count, 0);
-
+  // const monthTotal = Object.entries(data).filter(([key, value]) => {
+  //   console.log(`Key: ${key}, Value: ${value}`);
+  //   key.includes(monthString) && key.includes(",") && typeof value === "number";
+  // });
+  // .reduce((sum, [, count]) => sum + count, 0);
+  const monthTotal = Object.entries(data).reduce((sum, [key, value]) => {
+    if (typeof value === "number") {
+      const result = sum + value;
+      //console.log(result);
+      return result;
+    }
+    return sum;
+  }, 0);
+  //console.log("monthTotal", monthTotal);
   // Store the new month total
   data[monthString] = monthTotal;
-  localStorage.setItem("counterData", JSON.stringify(data));
+  //localStorage.setItem("counterData", JSON.stringify(data));
+
+  //const monthTotal = 0;
 
   return monthTotal;
 }
