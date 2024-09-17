@@ -58,30 +58,48 @@ function simulateData() {
 //     return previousSum;
 //   }
 
-let previousData = {};
-let previousSum = 0;
+// let previousData = {};
+// let previousSum = 0;
+
+// function calculateMonthTotal(data, monthString) {
+//   // Check if a new day has been added
+//   const newDayAdded = Object.keys(data).some((day) => !previousData[day]);
+
+//   if (newDayAdded) {
+//     //Calculate the sum of the new data
+//     const sum = Object.values(data).reduce((acc, current) => acc + current, 0);
+
+//     // Update the previous data and sum
+//     previousData = { ...previousData, ...data };
+//     previousSum = sum;
+
+//     // Store the updated data and sum in local storage
+//     localStorage.setItem("previousData", JSON.stringify(previousData));
+//     localStorage.setItem("previousSum", previousSum);
+//     //const sum = 0;
+//     return sum;
+//   } else {
+//     // If no new day has been added, return the previous sum
+//     return previousSum;
+//   }
+// }
 
 function calculateMonthTotal(data, monthString) {
-  // Check if a new day has been added
-  const newDayAdded = Object.keys(data).some((day) => !previousData[day]);
-
-  if (newDayAdded) {
-    //Calculate the sum of the new data
-    const sum = Object.values(data).reduce((acc, current) => acc + current, 0);
-
-    // Update the previous data and sum
-    previousData = { ...previousData, ...data };
-    previousSum = sum;
-
-    // Store the updated data and sum in local storage
-    localStorage.setItem("previousData", JSON.stringify(previousData));
-    localStorage.setItem("previousSum", previousSum);
-    //const sum = 0;
-    return sum;
-  } else {
-    // If no new day has been added, return the previous sum
-    return previousSum;
+  const storedTotal = localStorage.getItem(`monthTotal_${monthString}`);
+  if (storedTotal) {
+    return parseInt(storedTotal, 10);
   }
+
+  const monthData = Object.entries(data);
+  const sum = monthData
+    .filter(([key]) => key.includes(monthString))
+    .reduce(
+      (acc, [_, value]) => acc + (typeof value === "number" ? value : 0),
+      0
+    );
+
+  localStorage.setItem(`monthTotal_${monthString}`, sum.toString());
+  return sum;
 }
 
 // if (!sumCalculated) {
@@ -226,32 +244,80 @@ export default function CounterApp() {
   //   return () => clearInterval(interval);
   // }, []);
 
+  // useEffect(() => {
+  //   const storedData = localStorage.getItem("counterData");
+  //   const storedLastCountDate = localStorage.getItem("lastCountDate");
+  //   //console.log(storedData);
+  //   if (storedData && storedLastCountDate) {
+  //     const parsedData = JSON.parse(storedData);
+  //     //console.log("parse data:", parsedData);
+  //     const parsedLastCountDate = new Date(storedLastCountDate);
+
+  //     const today = new Date();
+  //     const todayString = format(today, "EEEE, MMMM d, yyyy");
+  //     const monthString = format(today, "MMMM yyyy");
+  //     setMonthString(monthString);
+  //     const monthTotal = calculateMonthTotal(parsedData, monthString);
+  //     console.log(monthTotal);
+  //     parsedData[monthString] = monthTotal;
+  //     if (parsedData[todayString]) {
+  //       //console.log(parsedData[todayString]);
+  //       setCurrentCount(parsedData[todayString]);
+  //       setLastCountDate(parsedLastCountDate);
+  //     } else {
+  //       const newCount = getRandomNumber();
+  //       parsedData[todayString] = newCount;
+  //       setCurrentCount(newCount);
+  //       setLastCountDate(today);
+  //       localStorage.setItem("lastCountDate", today.toISOString());
+  //     }
+
+  //     setData(parsedData);
+  //     localStorage.setItem("counterData", JSON.stringify(parsedData));
+  //   } else {
+  //     const simulatedData = simulateData();
+  //     const today = new Date();
+  //     const monthString = format(today, "MMMM yyyy");
+  //     const monthTotal = calculateMonthTotal(simulatedData, monthString);
+  //     simulatedData[monthString] = monthTotal;
+
+  //     setData(simulatedData);
+  //     setLastCountDate(today);
+  //     setCurrentCount(null);
+  //     localStorage.setItem("counterData", JSON.stringify(simulatedData));
+  //     localStorage.setItem("lastCountDate", today.toISOString());
+  //   }
+  // }, []); // empty dependency array
+
   useEffect(() => {
     const storedData = localStorage.getItem("counterData");
     const storedLastCountDate = localStorage.getItem("lastCountDate");
-    //console.log(storedData);
+
     if (storedData && storedLastCountDate) {
       const parsedData = JSON.parse(storedData);
-      //console.log("parse data:", parsedData);
       const parsedLastCountDate = new Date(storedLastCountDate);
 
       const today = new Date();
       const todayString = format(today, "EEEE, MMMM d, yyyy");
       const monthString = format(today, "MMMM yyyy");
       setMonthString(monthString);
+
+      const monthTotal = calculateMonthTotal(parsedData, monthString);
+      parsedData[monthString] = monthTotal;
+
       if (parsedData[todayString]) {
-        //console.log(parsedData[todayString]);
         setCurrentCount(parsedData[todayString]);
         setLastCountDate(parsedLastCountDate);
-        const monthTotal = calculateMonthTotal(parsedData, monthString);
-        console.log(monthTotal);
-        parsedData[monthString] = monthTotal;
       } else {
         const newCount = getRandomNumber();
         parsedData[todayString] = newCount;
         setCurrentCount(newCount);
         setLastCountDate(today);
         localStorage.setItem("lastCountDate", today.toISOString());
+
+        // Recalculate month total with the new day's count
+        const updatedMonthTotal = calculateMonthTotal(parsedData, monthString);
+        parsedData[monthString] = updatedMonthTotal;
       }
 
       setData(parsedData);
@@ -269,7 +335,11 @@ export default function CounterApp() {
       localStorage.setItem("counterData", JSON.stringify(simulatedData));
       localStorage.setItem("lastCountDate", today.toISOString());
     }
-  }, []); // empty dependency array
+  }, []);
+
+  // const monthTotal = calculateMonthTotal(data);
+  // console.log(monthTotal);
+  //parsedData[monthString] = monthTotal;
   // console.log(data);
   const filteredData = Object.entries(data).filter(([key, _]) => {
     const matchesFilter =
@@ -362,7 +432,11 @@ export default function CounterApp() {
                 />
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-gray-900">{count}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {date.includes(",")
+                    ? count
+                    : localStorage.getItem(`monthTotal_${date}`) || count}
+                </p>
                 {!date.includes(",") && (
                   <p className="text-sm text-gray-600 mt-1">
                     Total for the month
