@@ -13,7 +13,7 @@ const geistMono = localFont({
 });
 
 export const metadata = {
-  title: "Daily Counter",
+  title: "Rsh",
   description: "daily counter",
 };
 
